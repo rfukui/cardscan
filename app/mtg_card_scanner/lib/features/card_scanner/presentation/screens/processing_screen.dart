@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/routes.dart';
 import '../../domain/value_objects/scanner_status.dart';
 import '../providers/providers.dart';
+import '../providers/scanner_state.dart';
 
 class ProcessingScreen extends ConsumerStatefulWidget {
   const ProcessingScreen({super.key});
@@ -15,18 +16,39 @@ class ProcessingScreen extends ConsumerStatefulWidget {
 }
 
 class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
+  bool _errorSnackVisible = false;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) {
+        return;
+      }
+      final state = ref.read(scannerNotifierProvider);
+      _handleInitialState(state);
+    });
+  }
+
+  void _handleInitialState(ScannerState state) {
+    if (state.status == ScannerStatus.result && state.recognitionResult != null) {
+      _goToNextScreen(state);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    ref.listen(scannerNotifierProvider, (previous, next) {
+    ref.listen<ScannerState>(scannerNotifierProvider, (previous, next) {
       if (next.status == ScannerStatus.result && next.recognitionResult != null) {
-        final route = next.recognitionResult!.requiresManualSelection
-            ? AppRoutes.candidateSelection
-            : AppRoutes.result;
-        Navigator.of(context).pushReplacementNamed(route);
-      } else if (next.status == ScannerStatus.error) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(next.message)),
-        );
+        _goToNextScreen(next);
+      } else if (next.status == ScannerStatus.error && !_errorSnackVisible) {
+        _errorSnackVisible = true;
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text(next.message)))
+            .closed
+            .then((_) {
+          _errorSnackVisible = false;
+        });
       }
     });
 
@@ -67,8 +89,12 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
                 const SizedBox(height: 20),
                 FilledButton(
                   onPressed: () {
-                    ref.read(scannerNotifierProvider.notifier).reset();
-                    Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.camera, (route) => false);
+                    ScaffoldMessenger.of(context).clearSnackBars();
+                    _errorSnackVisible = false;
+                    ref.invalidate(scannerNotifierProvider);
+                    Navigator.of(context).popUntil(
+                      (route) => route.settings.name == AppRoutes.camera || route.isFirst,
+                    );
                   },
                   child: const Text('Try again'),
                 ),
@@ -78,5 +104,12 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
         ),
       ),
     );
+  }
+
+  void _goToNextScreen(ScannerState state) {
+    final route = state.recognitionResult!.requiresManualSelection
+        ? AppRoutes.candidateSelection
+        : AppRoutes.result;
+    Navigator.of(context).pushReplacementNamed(route);
   }
 }

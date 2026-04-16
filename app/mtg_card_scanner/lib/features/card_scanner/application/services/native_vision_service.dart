@@ -1,6 +1,5 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-import 'dart:ui';
 import 'package:flutter/services.dart';
 import '../../../../core/channels/native_vision_channel.dart';
 import '../../domain/entities/detected_card.dart';
@@ -18,11 +17,11 @@ class NativeVisionService {
       }
       final corners = (result['corners'] as List<dynamic>?) ?? <dynamic>[];
       return DetectedCard(
-        corners: corners.map((item) {
+        corners: corners.map<Offset>((item) {
           final map = item as Map<dynamic, dynamic>;
           return map.containsKey('x') && map.containsKey('y')
               ? Offset((map['x'] as num).toDouble(), (map['y'] as num).toDouble())
-              : const Offset.zero;
+              : Offset.zero;
         }).toList(),
         boundingBox: null,
         aspectRatioScore: (result['aspectRatioScore'] as num?)?.toDouble() ?? 1.0,

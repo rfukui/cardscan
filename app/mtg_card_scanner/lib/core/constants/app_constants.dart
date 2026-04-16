@@ -4,4 +4,6 @@ class AppConstants {
   static const nativeVisionChannel = 'card_scanner/native_vision';
   static const bundledCatalogAssetPath = 'assets/database/mtg_cards.sqlite';
   static const writableCatalogDatabaseName = 'mtg_cards.sqlite';
+  static const writableCatalogDatabaseVersionFileName = 'mtg_cards.version';
+  static const bundledCatalogDatabaseVersion = 2;
 }

@@ -14,6 +14,7 @@ Thumbs.db
 *.log
 *.tmp
 *.temp
+bugreport-*.zip
 
 # Python
 __pycache__/
@@ -52,8 +53,11 @@ app/mtg_card_scanner/ios/Flutter/flutter_export_environment.sh
 *.sqlite-wal
 *.db-shm
 *.db-wal
+data/generated/mtg_cards.sqlite
+app/mtg_card_scanner/assets/database/mtg_cards.sqlite
 
 # MTG raw data handling
+data/raw/AllPrintings.sqlite.xz
 data/raw/AllPrintings.sqlite
 data/raw/*.sqlite.tmp
 data/raw/*.sqlite3
@@ -65,8 +69,6 @@ site/
 node_modules/
 npm-debug.log*
 
-# Keep tracked generated databases and placeholders
-!data/generated/mtg_cards.sqlite
-!app/mtg_card_scanner/assets/database/mtg_cards.sqlite
+# Keep tracked placeholders
 !data/raw/.gitkeep
 !data/generated/.gitkeep

@@ -57,6 +57,9 @@ class CandidateSelectionScreen extends ConsumerWidget {
                     trailing: Text(candidate.finalScore.toStringAsFixed(2)),
                     onTap: () async {
                       await ref.read(scannerNotifierProvider.notifier).selectCandidate(candidate);
+                      if (!context.mounted) {
+                        return;
+                      }
                       Navigator.of(context).pushReplacementNamed(AppRoutes.result);
                     },
                   ),

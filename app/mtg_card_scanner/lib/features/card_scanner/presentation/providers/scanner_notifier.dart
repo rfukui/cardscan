@@ -6,21 +6,26 @@ import '../../domain/entities/magic_card.dart';
 import '../../domain/entities/card_recognition_result.dart';
 import '../../domain/entities/scan_history_entry.dart';
 import '../../domain/value_objects/scanner_status.dart';
-import '../../application/usecases/save_scan_history_usecase.dart';
 import '../../application/usecases/load_scan_history_usecase.dart';
 import '../../application/usecases/recognize_card_usecase.dart';
+import '../../application/usecases/save_scan_history_usecase.dart';
+import 'providers.dart';
 import '../providers/scanner_state.dart';
 
-class ScannerNotifier extends StateNotifier<ScannerState> {
-  final RecognizeCardUseCase recognizeCardUseCase;
-  final SaveScanHistoryUseCase saveScanHistoryUseCase;
-  final LoadScanHistoryUseCase loadScanHistoryUseCase;
+class ScannerNotifier extends Notifier<ScannerState> {
+  RecognizeCardUseCase get _recognizeCardUseCase =>
+      ref.read(recognizeCardUseCaseProvider);
+  SaveScanHistoryUseCase get _saveScanHistoryUseCase =>
+      ref.read(saveScanHistoryUseCaseProvider);
+  LoadScanHistoryUseCase get _loadScanHistoryUseCase =>
+      ref.read(loadScanHistoryUseCaseProvider);
 
-  ScannerNotifier({
-    required this.recognizeCardUseCase,
-    required this.saveScanHistoryUseCase,
-    required this.loadScanHistoryUseCase,
-  }) : super(const ScannerState());
+  @override
+  ScannerState build() {
+    // Keep the history use case wired into the notifier scope for future expansion.
+    _loadScanHistoryUseCase;
+    return const ScannerState();
+  }
 
   void setPreviewStatus(String message, {ScannerStatus status = ScannerStatus.analyzing}) {
     if (state.status == ScannerStatus.processing || state.status == ScannerStatus.capturing) {
@@ -53,7 +58,7 @@ class ScannerNotifier extends StateNotifier<ScannerState> {
     );
 
     try {
-      final result = await recognizeCardUseCase.execute(imagePath);
+      final result = await _recognizeCardUseCase.execute(imagePath);
       if (result.bestMatch == null && result.candidates.isEmpty) {
         state = state.copyWith(
           status: ScannerStatus.error,
@@ -111,7 +116,7 @@ class ScannerNotifier extends StateNotifier<ScannerState> {
     String imagePath, {
     required bool selectedManually,
   }) async {
-    await saveScanHistoryUseCase.execute(
+    await _saveScanHistoryUseCase.execute(
       ScanHistoryEntry(
         id: 'scan-${DateTime.now().millisecondsSinceEpoch}',
         cardId: card.id,

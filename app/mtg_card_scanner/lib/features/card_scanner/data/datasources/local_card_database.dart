@@ -27,7 +27,7 @@ class LocalCardDatabase {
 
   static Future<void> _onOpen(Database db) async {
     await db.execute('''
-      CREATE TABLE $_scanHistoryTable (
+      CREATE TABLE IF NOT EXISTS $_scanHistoryTable (
         id TEXT PRIMARY KEY,
         card_id TEXT,
         card_name TEXT NOT NULL,
@@ -172,7 +172,14 @@ class LocalCardDatabase {
       AppConstants.writableCatalogDatabaseName,
     );
     final databaseFile = File(databasePath);
-    if (await databaseFile.exists()) {
+    final versionFile = File(
+      p.join(directory.path, AppConstants.writableCatalogDatabaseVersionFileName),
+    );
+    final currentVersion = await _readWritableDatabaseVersion(versionFile);
+    final shouldRefreshDatabase =
+        !await databaseFile.exists() || currentVersion != AppConstants.bundledCatalogDatabaseVersion;
+
+    if (!shouldRefreshDatabase) {
       return databasePath;
     }
 
@@ -181,6 +188,18 @@ class LocalCardDatabase {
       asset.buffer.asUint8List(asset.offsetInBytes, asset.lengthInBytes),
       flush: true,
     );
+    await versionFile.writeAsString(
+      AppConstants.bundledCatalogDatabaseVersion.toString(),
+      flush: true,
+    );
     return databasePath;
+  }
+
+  Future<int?> _readWritableDatabaseVersion(File versionFile) async {
+    if (!await versionFile.exists()) {
+      return null;
+    }
+    final value = await versionFile.readAsString();
+    return int.tryParse(value.trim());
   }
 }

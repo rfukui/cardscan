@@ -79,7 +79,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
 
       await _controller?.dispose();
       _controller = controller;
-      _startMockFrameAnalysis();
+      _startPreviewHealthCheck();
+      ref.read(scannerNotifierProvider.notifier).setPreviewStatus(
+            'Position the card inside the frame',
+            status: ScannerStatus.readyToCapture,
+          );
       setState(() {});
     } catch (_) {
       ref.read(scannerNotifierProvider.notifier).setPreviewStatus(
@@ -91,13 +95,11 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
     }
   }
 
-  void _startMockFrameAnalysis() {
+  void _startPreviewHealthCheck() {
     _analysisTimer?.cancel();
-    final notifier = ref.read(scannerNotifierProvider.notifier);
     final nativeVision = ref.read(nativeVisionServiceProvider);
-    var tick = 0;
 
-    _analysisTimer = Timer.periodic(const Duration(milliseconds: 900), (_) async {
+    _analysisTimer = Timer.periodic(const Duration(seconds: 2), (_) async {
       final controller = _controller;
       if (!mounted || controller == null || !controller.value.isInitialized) {
         return;
@@ -106,19 +108,6 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
           ref.read(scannerNotifierProvider).status == ScannerStatus.capturing) {
         return;
       }
-
-      tick++;
-      final messages = <String>[
-        'Align the card',
-        'Move closer',
-        'Hold steady',
-      ];
-      final message = messages[tick % messages.length];
-      final status = message == 'Hold steady'
-          ? ScannerStatus.readyToCapture
-          : ScannerStatus.analyzing;
-
-      notifier.setPreviewStatus(message, status: status);
 
       // Hook kept in place for future automatic quality gating via native CV.
       await nativeVision.measureImageQuality('preview-frame');
@@ -201,9 +190,9 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
                     begin: Alignment.topCenter,
                     end: Alignment.bottomCenter,
                     colors: [
-                      Colors.black.withOpacity(0.45),
+                      Colors.black.withValues(alpha: 0.45),
                       Colors.transparent,
-                      Colors.black.withOpacity(0.55),
+                      Colors.black.withValues(alpha: 0.55),
                     ],
                   ),
                 ),
@@ -218,7 +207,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                         decoration: BoxDecoration(
-                          color: Colors.black.withOpacity(0.55),
+                          color: Colors.black.withValues(alpha: 0.55),
                           borderRadius: BorderRadius.circular(14),
                         ),
                         child: Text(
@@ -228,7 +217,7 @@ class _CameraScreenState extends ConsumerState<CameraScreen> with WidgetsBinding
                       ),
                       const SizedBox(height: 18),
                       Text(
-                        'Manual capture enabled. Automatic capture hook is prepared for native CV.',
+                        'Manual capture mode. Tap capture when the card is readable in the frame.',
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70),
                       ),

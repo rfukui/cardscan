@@ -13,7 +13,7 @@ class ScannerState {
 
   const ScannerState({
     this.status = ScannerStatus.idle,
-    this.message = 'Align the card',
+    this.message = 'Position the card inside the frame',
     this.capturedImagePath,
     this.recognitionResult,
     this.error,

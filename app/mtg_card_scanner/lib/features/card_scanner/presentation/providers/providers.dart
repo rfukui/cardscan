@@ -19,8 +19,8 @@ import '../../domain/repositories/scan_history_repository.dart';
 import '../../data/datasources/local_card_database.dart';
 import '../../data/repositories/card_catalog_repository_impl.dart';
 import '../../data/repositories/scan_history_repository_impl.dart';
-import '../providers/scanner_notifier.dart';
-import '../providers/scanner_state.dart';
+import 'scanner_notifier.dart';
+import 'scanner_state.dart';
 
 final localCardDatabaseProvider = Provider<LocalCardDatabase>((ref) {
   return LocalCardDatabase();
@@ -93,13 +93,8 @@ final rearCameraProvider = FutureProvider<CameraDescription?>((ref) async {
   return cameras.isNotEmpty ? cameras.first : null;
 });
 
-final scannerNotifierProvider = StateNotifierProvider<ScannerNotifier, ScannerState>((ref) {
-  return ScannerNotifier(
-    recognizeCardUseCase: ref.read(recognizeCardUseCaseProvider),
-    saveScanHistoryUseCase: ref.read(saveScanHistoryUseCaseProvider),
-    loadScanHistoryUseCase: ref.read(loadScanHistoryUseCaseProvider),
-  );
-});
+final scannerNotifierProvider =
+    NotifierProvider<ScannerNotifier, ScannerState>(ScannerNotifier.new);
 
 final scannerStateProvider = Provider<ScannerState>((ref) {
   return ref.watch(scannerNotifierProvider);

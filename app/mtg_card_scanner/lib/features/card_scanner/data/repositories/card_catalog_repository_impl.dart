@@ -3,7 +3,6 @@
 import '../../domain/entities/magic_card.dart';
 import '../../domain/repositories/card_catalog_repository.dart';
 import '../datasources/local_card_database.dart';
-import '../models/magic_card_model.dart';
 
 class CardCatalogRepositoryImpl implements CardCatalogRepository {
   final LocalCardDatabase database;
