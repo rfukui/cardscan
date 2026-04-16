@@ -1,0 +1,70 @@
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+.idea/
+.vscode/
+.codex
+
+# General logs / temp files
+*.log
+*.tmp
+*.temp
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+.coverage.*
+.tox/
+.nox/
+.venv/
+venv/
+env/
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+build/
+
+# Flutter platform build outputs
+app/mtg_card_scanner/android/.gradle/
+app/mtg_card_scanner/android/app/build/
+app/mtg_card_scanner/ios/Pods/
+app/mtg_card_scanner/ios/.symlinks/
+app/mtg_card_scanner/ios/Flutter/ephemeral/
+app/mtg_card_scanner/ios/Flutter/Generated.xcconfig
+app/mtg_card_scanner/ios/Flutter/flutter_export_environment.sh
+
+# Generated / local SQLite runtime artifacts
+*.sqlite-shm
+*.sqlite-wal
+*.db-shm
+*.db-wal
+
+# MTG raw data handling
+data/raw/AllPrintings.sqlite
+data/raw/*.sqlite.tmp
+data/raw/*.sqlite3
+
+# Local Python packaging outputs
+dist/
+site/
+*.egg-info/
+
+# Keep tracked generated databases and placeholders
+!data/generated/mtg_cards.sqlite
+!app/mtg_card_scanner/assets/database/mtg_cards.sqlite
+!data/raw/.gitkeep
+!data/generated/.gitkeep
