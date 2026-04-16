@@ -62,6 +62,8 @@ data/raw/*.sqlite3
 dist/
 site/
 *.egg-info/
+node_modules/
+npm-debug.log*
 
 # Keep tracked generated databases and placeholders
 !data/generated/mtg_cards.sqlite

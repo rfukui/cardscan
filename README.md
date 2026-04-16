@@ -44,6 +44,17 @@ python -m mtg_data_extractor.cli sync
 
 - Data pipeline: [docs/data-pipeline.md](docs/data-pipeline.md)
 - Python extractor: [tools/mtg_data_extractor/README.md](tools/mtg_data_extractor/README.md)
+- Contribution guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
+
+## Repository Tooling
+
+Root-level repository tooling is managed with npm.
+
+Install it once to enable `commitlint` and the Git hook setup:
+
+```bash
+npm install
+```
 
 ## License
 
