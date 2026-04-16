@@ -3,7 +3,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/routes.dart';
 import '../providers/providers.dart';
 
 class CandidateSelectionScreen extends ConsumerWidget {
@@ -19,10 +18,8 @@ class CandidateSelectionScreen extends ConsumerWidget {
       body: candidates.isEmpty
           ? Center(
               child: FilledButton(
-                onPressed: () {
-                  ref.read(scannerNotifierProvider.notifier).reset();
-                  Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.camera, (route) => false);
-                },
+                onPressed:
+                    ref.read(scannerNotifierProvider.notifier).restartScanFlow,
                 child: const Text('Back to camera'),
               ),
             )
@@ -56,11 +53,9 @@ class CandidateSelectionScreen extends ConsumerWidget {
                     ),
                     trailing: Text(candidate.finalScore.toStringAsFixed(2)),
                     onTap: () async {
-                      await ref.read(scannerNotifierProvider.notifier).selectCandidate(candidate);
-                      if (!context.mounted) {
-                        return;
-                      }
-                      Navigator.of(context).pushReplacementNamed(AppRoutes.result);
+                      await ref
+                          .read(scannerNotifierProvider.notifier)
+                          .selectCandidate(candidate);
                     },
                   ),
                 );

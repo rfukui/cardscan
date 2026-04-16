@@ -11,6 +11,7 @@ import '../../application/usecases/recognize_card_usecase.dart';
 import '../../application/usecases/save_scan_history_usecase.dart';
 import 'providers.dart';
 import '../providers/scanner_state.dart';
+import 'scanner_route_target.dart';
 
 class ScannerNotifier extends Notifier<ScannerState> {
   RecognizeCardUseCase get _recognizeCardUseCase =>
@@ -27,8 +28,10 @@ class ScannerNotifier extends Notifier<ScannerState> {
     return const ScannerState();
   }
 
-  void setPreviewStatus(String message, {ScannerStatus status = ScannerStatus.analyzing}) {
-    if (state.status == ScannerStatus.processing || state.status == ScannerStatus.capturing) {
+  void setPreviewStatus(String message,
+      {ScannerStatus status = ScannerStatus.analyzing}) {
+    if (state.status == ScannerStatus.processing ||
+        state.status == ScannerStatus.capturing) {
       return;
     }
     state = state.copyWith(
@@ -42,6 +45,28 @@ class ScannerNotifier extends Notifier<ScannerState> {
     state = const ScannerState();
   }
 
+  void consumePendingRoute() {
+    if (state.pendingRoute == null) {
+      return;
+    }
+    state = state.copyWith(clearPendingRoute: true);
+  }
+
+  void restartScanFlow() {
+    state = const ScannerState(
+      pendingRoute: ScannerRouteTarget.camera,
+    );
+  }
+
+  void reopenCandidateSelection() {
+    if (!state.hasCandidates) {
+      return;
+    }
+    state = state.copyWith(
+      pendingRoute: ScannerRouteTarget.candidateSelection,
+    );
+  }
+
   Future<void> captureImage(String imagePath) async {
     state = state.copyWith(
       status: ScannerStatus.capturing,
@@ -50,6 +75,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       clearError: true,
       clearRecognitionResult: true,
       selectedManually: false,
+      pendingRoute: ScannerRouteTarget.processing,
     );
 
     state = state.copyWith(
@@ -64,15 +90,21 @@ class ScannerNotifier extends Notifier<ScannerState> {
           status: ScannerStatus.error,
           message: 'No matching card found',
           error: 'OCR did not produce a usable local match.',
+          clearPendingRoute: true,
         );
         return;
       }
 
       state = state.copyWith(
         status: ScannerStatus.result,
-        message: result.requiresManualSelection ? 'Select the correct card' : 'Result ready',
+        message: result.requiresManualSelection
+            ? 'Select the correct card'
+            : 'Result ready',
         capturedImagePath: imagePath,
         recognitionResult: result,
+        pendingRoute: result.requiresManualSelection
+            ? ScannerRouteTarget.candidateSelection
+            : ScannerRouteTarget.result,
       );
 
       if (!result.requiresManualSelection) {
@@ -84,6 +116,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
         status: ScannerStatus.error,
         message: 'Something went wrong',
         error: e.toString(),
+        clearPendingRoute: true,
       );
     }
   }
@@ -106,6 +139,7 @@ class ScannerNotifier extends Notifier<ScannerState> {
       message: 'Result ready',
       recognitionResult: resolved,
       selectedManually: true,
+      pendingRoute: ScannerRouteTarget.result,
     );
 
     await _saveHistory(candidate.card, imagePath, selectedManually: true);

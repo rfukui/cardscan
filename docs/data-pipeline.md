@@ -1,83 +1,132 @@
 # Data Pipeline
 
-## Goal
+This repository ships an offline scanner, so the card catalog must be prepared ahead of time and bundled into the Flutter app as a SQLite asset.
 
-The data pipeline transforms the MTGJSON database into a final SQLite database optimized for the offline scanner.
+The pipeline is intentionally split from the app:
 
-The Flutter app does not run Python at runtime. It only consumes the prebuilt database bundled at `assets/database/mtg_cards.sqlite`.
+- Python builds the database
+- Flutter only reads the finished database
 
-## Source
+## Source File
 
-Primary input:
+The extractor expects a local MTGJSON SQLite export:
 
 - `data/raw/AllPrintings.sqlite`
-- `data/raw/AllPrintings.sqlite.xz`
+- or `data/raw/AllPrintings.sqlite.xz`
 
-The compressed archive is not stored in the repository.
-
-Download it from:
+Recommended download source:
 
 - `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
 
-Then place it at:
+Expected local path:
 
 - `data/raw/AllPrintings.sqlite.xz`
 
-## Output
+## Extractor Responsibilities
 
-Generated database:
+`tools/mtg_data_extractor` is responsible for:
+
+- reading the MTGJSON SQLite source
+- loading printings and foreign-language rows
+- normalizing search text
+- filtering out objects that should not pollute the main scanner flow
+- generating the final scanner schema
+- exporting the final SQLite database
+- syncing that database into Flutter assets when requested
+
+The Flutter app is not responsible for any of those build-time steps.
+
+## Output Files
+
+Intermediate generated artifact:
 
 - `data/generated/mtg_cards.sqlite`
 
-Database synced to the app:
+Runtime asset consumed by Flutter:
 
 - `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
 
-## Steps
+These SQLite files are generated locally and are not committed to the repository.
 
-1. Read the MTGJSON SQLite database.
-2. Extract printings.
-3. Extract multilingual localizations.
-4. Generate aliases useful for OCR and matching.
-5. Filter out objects that should not be part of the main scanner flow.
-6. Export the final database with search indexes.
-7. Copy the final database into the app assets.
+## Build and Sync Flow
 
-## Final Schema
-
-Main tables:
-
-- `cards`
-- `card_localizations`
-- `card_aliases`
-
-The app uses `cards` as its primary source and can query `card_localizations` and `card_aliases` for multilingual matching.
-
-## Commands
-
-Download the source archive:
-
-```bash
-curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o data/raw/AllPrintings.sqlite.xz
-```
-
-Build:
+From the repository root:
 
 ```bash
 cd tools/mtg_data_extractor
-python -m mtg_data_extractor.cli build
+python3 -m mtg_data_extractor.cli build
+python3 -m mtg_data_extractor.cli sync
 ```
 
-Sync:
+Or in a single step:
 
 ```bash
 cd tools/mtg_data_extractor
-python -m mtg_data_extractor.cli sync
+python3 -m mtg_data_extractor.cli build --sync-to-app
 ```
 
-Inspect:
+## Output Schema
 
-```bash
-cd tools/mtg_data_extractor
-python -m mtg_data_extractor.cli inspect
-```
+The generated database contains:
+
+### `cards`
+
+Primary printing rows used by the scanner UI and result screens.
+
+Notable fields include:
+
+- UUID
+- English name
+- normalized English name
+- set code and set name
+- collector number
+- language
+- mana cost
+- type line
+- oracle text
+- rarity
+
+### `card_localizations`
+
+Localized card text by language, keyed to the printing UUID.
+
+This is the main bridge between foreign-language OCR results and the canonical printing data.
+
+### `card_aliases`
+
+Additional aliases derived from names, face names, ASCII names, and foreign-language rows.
+
+These aliases improve search resilience when OCR is noisy or when multiple printed forms of a name exist.
+
+## Multilingual Strategy
+
+The pipeline preserves:
+
+- one primary row per printing in `cards`
+- language-specific localized rows in `card_localizations`
+- search aliases in `card_aliases`
+
+This enables the app to search by:
+
+- canonical English names
+- localized names from the source data
+- alias values useful for OCR matching
+
+The normalization layer preserves non-Latin scripts needed by the scanner goal, including Japanese, Chinese, Korean, and Cyrillic data when they exist in MTGJSON.
+
+## OCR and Search Implications
+
+At runtime the app:
+
+1. runs OCR on a captured image
+2. normalizes OCR candidate text
+3. searches `cards`, `card_localizations`, and `card_aliases`
+4. scores and ranks local candidates
+
+That means the pipeline directly affects scanner quality. If a name or alias is missing here, Flutter cannot recover it later without a new generated database.
+
+## Failure Modes to Expect
+
+- If the MTGJSON archive is missing, the extractor cannot build the database.
+- If `build` is not followed by `sync`, the app asset will remain missing or stale.
+- If the Flutter asset is missing, the app now reports an explicit initialization error telling contributors to run the extractor build and sync steps.

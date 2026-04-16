@@ -114,7 +114,9 @@ class ScannerDatabaseExporter:
         finally:
             connection.close()
 
-    def _insert_cards(self, connection: sqlite3.Connection, dataset: ScannerDataset) -> None:
+    def _insert_cards(
+        self, connection: sqlite3.Connection, dataset: ScannerDataset
+    ) -> None:
         connection.executemany(
             """
             INSERT INTO cards (
@@ -206,28 +208,18 @@ class ScannerDatabaseExporter:
         return int(row[0]) if row else 0
 
     def _language_counts(self, connection: sqlite3.Connection) -> list[tuple[str, int]]:
-        return [
-            (str(row[0]), int(row[1]))
-            for row in connection.execute(
-                """
+        return [(str(row[0]), int(row[1])) for row in connection.execute("""
                 SELECT language_code, COUNT(*)
                 FROM card_localizations
                 GROUP BY language_code
                 ORDER BY COUNT(*) DESC, language_code ASC
-                """
-            )
-        ]
+                """)]
 
     def _set_counts(self, connection: sqlite3.Connection) -> list[tuple[str, int]]:
-        return [
-            (str(row[0]), int(row[1]))
-            for row in connection.execute(
-                """
+        return [(str(row[0]), int(row[1])) for row in connection.execute("""
                 SELECT set_code, COUNT(*)
                 FROM cards
                 GROUP BY set_code
                 ORDER BY COUNT(*) DESC, set_code ASC
                 LIMIT 20
-                """
-            )
-        ]
+                """)]

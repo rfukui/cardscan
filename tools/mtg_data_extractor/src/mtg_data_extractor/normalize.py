@@ -55,9 +55,7 @@ def normalize_text(value: str | None) -> str:
 def _fold_latin_char(char: str) -> str | None:
     decomposed = unicodedata.normalize("NFKD", char)
     stripped = "".join(
-        component
-        for component in decomposed
-        if not unicodedata.combining(component)
+        component for component in decomposed if not unicodedata.combining(component)
     )
     if not stripped:
         return None

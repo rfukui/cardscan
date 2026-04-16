@@ -42,7 +42,9 @@ class HistoryScreen extends ConsumerWidget {
                   contentPadding: const EdgeInsets.symmetric(vertical: 8),
                   title: Text(entry.cardName),
                   subtitle: Text(formattedDate),
-                  trailing: entry.selectedManually ? const Icon(Icons.touch_app) : null,
+                  trailing: entry.selectedManually
+                      ? const Icon(Icons.touch_app)
+                      : null,
                   onTap: entry.cardId == null
                       ? null
                       : () {

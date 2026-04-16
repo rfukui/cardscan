@@ -28,7 +28,9 @@ def build_parser() -> argparse.ArgumentParser:
 
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    build_parser = subparsers.add_parser("build", help="Build scanner SQLite from MTGJSON.")
+    build_parser = subparsers.add_parser(
+        "build", help="Build scanner SQLite from MTGJSON."
+    )
     build_parser.add_argument(
         "--input",
         type=Path,
@@ -58,7 +60,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Destination app asset database path.",
     )
 
-    sync_parser = subparsers.add_parser("sync", help="Copy generated SQLite to app assets.")
+    sync_parser = subparsers.add_parser(
+        "sync", help="Copy generated SQLite to app assets."
+    )
     sync_parser.add_argument(
         "--input",
         type=Path,
@@ -72,7 +76,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="Destination app asset database path.",
     )
 
-    inspect_parser = subparsers.add_parser("inspect", help="Inspect generated scanner SQLite.")
+    inspect_parser = subparsers.add_parser(
+        "inspect", help="Inspect generated scanner SQLite."
+    )
     inspect_parser.add_argument(
         "--input",
         type=Path,

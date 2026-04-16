@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'package:camera/camera.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../application/services/card_matcher_service.dart';
 import '../../application/services/ocr_service.dart';
@@ -16,6 +17,7 @@ import '../../domain/entities/magic_card.dart';
 import '../../domain/entities/scan_history_entry.dart';
 import '../../domain/repositories/card_catalog_repository.dart';
 import '../../domain/repositories/scan_history_repository.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../data/datasources/local_card_database.dart';
 import '../../data/repositories/card_catalog_repository_impl.dart';
 import '../../data/repositories/scan_history_repository_impl.dart';
@@ -50,7 +52,8 @@ final nativeVisionServiceProvider = Provider<NativeVisionService>((ref) {
   return NativeVisionService();
 });
 
-final recognitionPipelineServiceProvider = Provider<RecognitionPipelineService>((ref) {
+final recognitionPipelineServiceProvider =
+    Provider<RecognitionPipelineService>((ref) {
   return RecognitionPipelineService(
     nativeVisionService: ref.read(nativeVisionServiceProvider),
     ocrService: ref.read(ocrServiceProvider),
@@ -63,8 +66,10 @@ final captureCardUseCaseProvider = Provider<CaptureCardUseCase>((ref) {
   return CaptureCardUseCase();
 });
 
-final searchLocalCardDatabaseUseCaseProvider = Provider<SearchLocalCardDatabaseUseCase>((ref) {
-  return SearchLocalCardDatabaseUseCase(ref.read(cardCatalogRepositoryProvider));
+final searchLocalCardDatabaseUseCaseProvider =
+    Provider<SearchLocalCardDatabaseUseCase>((ref) {
+  return SearchLocalCardDatabaseUseCase(
+      ref.read(cardCatalogRepositoryProvider));
 });
 
 final recognizeCardUseCaseProvider = Provider<RecognizeCardUseCase>((ref) {
@@ -80,7 +85,18 @@ final loadScanHistoryUseCaseProvider = Provider<LoadScanHistoryUseCase>((ref) {
 });
 
 final appBootstrapProvider = FutureProvider<void>((ref) async {
-  await ref.read(cardCatalogRepositoryProvider).seedIfNeeded();
+  try {
+    await ref.read(cardCatalogRepositoryProvider).seedIfNeeded();
+  } on AppException {
+    rethrow;
+  } catch (error, stackTrace) {
+    debugPrint('[Bootstrap] Unexpected initialization failure: $error');
+    debugPrintStack(stackTrace: stackTrace);
+    throw AppException(
+      'Unable to initialize the local catalog database. '
+      'Confirm that the generated SQLite file was synced into app/mtg_card_scanner/assets/database.',
+    );
+  }
 });
 
 final rearCameraProvider = FutureProvider<CameraDescription?>((ref) async {
@@ -104,12 +120,14 @@ final recognitionResultProvider = Provider<CardRecognitionResult?>((ref) {
   return ref.watch(scannerNotifierProvider).recognitionResult;
 });
 
-final historyEntriesProvider = FutureProvider<List<ScanHistoryEntry>>((ref) async {
+final historyEntriesProvider =
+    FutureProvider<List<ScanHistoryEntry>>((ref) async {
   await ref.watch(appBootstrapProvider.future);
   return ref.read(loadScanHistoryUseCaseProvider).execute();
 });
 
-final cardByIdProvider = FutureProvider.family<MagicCard?, String>((ref, cardId) async {
+final cardByIdProvider =
+    FutureProvider.family<MagicCard?, String>((ref, cardId) async {
   await ref.watch(appBootstrapProvider.future);
   return ref.read(cardCatalogRepositoryProvider).getById(cardId);
 });

@@ -1,80 +1,111 @@
 # MTG Data Extractor
 
-Python tool responsible for transforming the MTGJSON database into the final SQLite database used by the Flutter app.
+`tools/mtg_data_extractor` is the internal data pipeline for this repository.
 
-## Responsibility
+It reads MTGJSON SQLite data, transforms it into a scanner-oriented schema, and produces the SQLite file consumed by the Flutter app. The extractor is a build-time tool only. The mobile app does not depend on Python at runtime.
 
-This tool is part of the repository's build/data pipeline.
+## Input
 
-It is not part of the mobile UI and is not used by the app at runtime.
-
-## Expected Input
+Expected source file:
 
 - `data/raw/AllPrintings.sqlite`
-- `data/raw/AllPrintings.sqlite.xz`
+- or `data/raw/AllPrintings.sqlite.xz`
 
-The compressed archive is not committed to the repository.
-
-Download it from:
-
-- `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
-
-Then place it at:
+The repository does not commit the raw MTGJSON archive. Download it manually and place it at:
 
 - `data/raw/AllPrintings.sqlite.xz`
+
+Example:
+
+```bash
+curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o data/raw/AllPrintings.sqlite.xz
+```
 
 ## Output
 
+Generated database:
+
 - `data/generated/mtg_cards.sqlite`
 
-Optionally, the generated database is synced to:
+Synced Flutter asset:
 
 - `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
 
-## Commands
+Neither SQLite file is committed. Contributors are expected to generate them locally.
 
-Download the source archive:
+## Main Commands
 
-```bash
-curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o ../../data/raw/AllPrintings.sqlite.xz
-```
+Run these commands from `tools/mtg_data_extractor`.
 
-Build using default paths:
+Build the scanner database:
 
 ```bash
-python -m mtg_data_extractor.cli build
+python3 -m mtg_data_extractor.cli build
 ```
 
-Build using explicit paths:
+Build and sync in one step:
 
 ```bash
-python -m mtg_data_extractor.cli build \
-  --input ../../data/raw/AllPrintings.sqlite \
-  --output ../../data/generated/mtg_cards.sqlite
+python3 -m mtg_data_extractor.cli build --sync-to-app
 ```
 
-Sync to the app:
+Sync an already generated database into the Flutter app:
 
 ```bash
-python -m mtg_data_extractor.cli sync
+python3 -m mtg_data_extractor.cli sync
 ```
 
-Inspect the final database:
+Inspect the generated output:
 
 ```bash
-python -m mtg_data_extractor.cli inspect
+python3 -m mtg_data_extractor.cli inspect
 ```
 
-## Internal Structure
+## Build Flow
 
-- `config.py`: default paths and configuration
-- `normalize.py`: text normalization
-- `sqlite_reader.py`: MTGJSON SQLite reading
-- `transformer.py`: transformation into the scanner schema
-- `exporter.py`: final SQLite creation
-- `models.py`: internal dataclasses
-- `cli.py`: command-line interface
+1. Read `AllPrintings.sqlite` or `AllPrintings.sqlite.xz`.
+2. Load card printings and optional foreign-language rows from the MTGJSON schema.
+3. Normalize printable names for OCR-friendly search.
+4. Generate the final scanner schema.
+5. Export the SQLite database to `data/generated/mtg_cards.sqlite`.
+6. Optionally copy the generated database into the Flutter app assets.
 
-## Note
+## Generated Tables
 
-The extractor accepts either an already decompressed `.sqlite` file or a `.sqlite.xz` file. When given `.xz`, it temporarily decompresses it for reading.
+The extractor produces three main tables:
+
+- `cards`
+  One row per printing. Holds primary card metadata used by the app.
+- `card_localizations`
+  Multilingual names and text rows associated with each card UUID.
+- `card_aliases`
+  Search aliases used to improve OCR and fuzzy matching.
+
+## Why Multilingual Extraction Exists
+
+The scanner is designed to work offline across all printed languages represented in the source data. That requires:
+
+- a primary printing record
+- localized names for OCR matching
+- alternate aliases that improve lookup quality when OCR is imperfect
+
+Without the multilingual tables, the app would be limited to English name matching and would miss many foreign printings.
+
+## Module Boundaries
+
+- `config.py`
+  Repository paths and default CLI locations.
+- `normalize.py`
+  Text normalization used during export and search preparation.
+- `sqlite_reader.py`
+  MTGJSON SQLite reading and decompression handling.
+- `transformer.py`
+  Conversion from MTGJSON rows into scanner rows.
+- `exporter.py`
+  Final schema creation and SQLite export.
+- `models.py`
+  Internal dataclasses for the transformation pipeline.
+- `cli.py`
+  Command-line entry point.
+
+See [`docs/data-pipeline.md`](../../docs/data-pipeline.md) for the full repository-level data flow.

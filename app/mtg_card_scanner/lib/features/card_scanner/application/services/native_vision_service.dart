@@ -8,7 +8,8 @@ import '../../domain/entities/image_quality_metrics.dart';
 class NativeVisionService {
   Future<DetectedCard?> detectCard(String imagePath) async {
     try {
-      final result = await NativeVisionChannel.channel.invokeMapMethod<String, dynamic>(
+      final result =
+          await NativeVisionChannel.channel.invokeMapMethod<String, dynamic>(
         'detectCard',
         {'imagePath': imagePath},
       );
@@ -20,11 +21,13 @@ class NativeVisionService {
         corners: corners.map<Offset>((item) {
           final map = item as Map<dynamic, dynamic>;
           return map.containsKey('x') && map.containsKey('y')
-              ? Offset((map['x'] as num).toDouble(), (map['y'] as num).toDouble())
+              ? Offset(
+                  (map['x'] as num).toDouble(), (map['y'] as num).toDouble())
               : Offset.zero;
         }).toList(),
         boundingBox: null,
-        aspectRatioScore: (result['aspectRatioScore'] as num?)?.toDouble() ?? 1.0,
+        aspectRatioScore:
+            (result['aspectRatioScore'] as num?)?.toDouble() ?? 1.0,
         isStable: (result['isStable'] as bool?) ?? true,
       );
     } on MissingPluginException {
@@ -64,13 +67,15 @@ class NativeVisionService {
 
   Future<ImageQualityMetrics> measureImageQuality(String imagePath) async {
     try {
-      final result = await NativeVisionChannel.channel.invokeMapMethod<String, dynamic>(
+      final result =
+          await NativeVisionChannel.channel.invokeMapMethod<String, dynamic>(
         'measureImageQuality',
         {'imagePath': imagePath},
       );
       return ImageQualityMetrics(
         blurScore: (result?['blurScore'] as num?)?.toDouble() ?? 0.2,
-        brightnessScore: (result?['brightnessScore'] as num?)?.toDouble() ?? 0.5,
+        brightnessScore:
+            (result?['brightnessScore'] as num?)?.toDouble() ?? 0.5,
         glareScore: (result?['glareScore'] as num?)?.toDouble() ?? 0.2,
         isAcceptable: (result?['isAcceptable'] as bool?) ?? true,
       );

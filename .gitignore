@@ -72,3 +72,4 @@ npm-debug.log*
 # Keep tracked placeholders
 !data/raw/.gitkeep
 !data/generated/.gitkeep
+!app/mtg_card_scanner/assets/database/.gitkeep

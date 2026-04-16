@@ -66,12 +66,16 @@ class MtgJsonSqliteReader:
             yield self.input_path
             return
 
-        with tempfile.NamedTemporaryFile(suffix=".sqlite", delete=False) as temporary_file:
+        with tempfile.NamedTemporaryFile(
+            suffix=".sqlite", delete=False
+        ) as temporary_file:
             temp_path = Path(temporary_file.name)
 
         try:
             logger.info("Decompressing %s to temporary SQLite file", self.input_path)
-            with lzma.open(self.input_path, "rb") as compressed, temp_path.open("wb") as output:
+            with lzma.open(self.input_path, "rb") as compressed, temp_path.open(
+                "wb"
+            ) as output:
                 shutil.copyfileobj(compressed, output)
             yield temp_path
         finally:
@@ -90,15 +94,20 @@ class MtgJsonSqliteReader:
 
         identifiers = self._json_object(row_dict.get("identifiers"))
         foreign_localizations = list(foreign_rows.get(uuid, []))
-        foreign_localizations.extend(self._parse_foreign_data_json(row_dict.get("foreignData")))
-        foreign_localizations.extend(self._parse_foreign_data_json(row_dict.get("foreign_data")))
+        foreign_localizations.extend(
+            self._parse_foreign_data_json(row_dict.get("foreignData"))
+        )
+        foreign_localizations.extend(
+            self._parse_foreign_data_json(row_dict.get("foreign_data"))
+        )
 
-        deduplicated_localizations = self._deduplicate_localizations(foreign_localizations)
+        deduplicated_localizations = self._deduplicate_localizations(
+            foreign_localizations
+        )
 
         set_code = self._text(row_dict, "setCode", "set_code")
-        set_name = (
-            self._text(row_dict, "setName", "set_name")
-            or set_names.get(set_code, "")
+        set_name = self._text(row_dict, "setName", "set_name") or set_names.get(
+            set_code, ""
         )
 
         return SourcePrinting(
@@ -106,7 +115,9 @@ class MtgJsonSqliteReader:
             name_en=self._text(row_dict, "name"),
             set_code=set_code,
             set_name=set_name,
-            collector_number=self._text(row_dict, "number", "collectorNumber", "collector_number"),
+            collector_number=self._text(
+                row_dict, "number", "collectorNumber", "collector_number"
+            ),
             language=self._text(row_dict, "language", default="en"),
             mana_cost=self._text(row_dict, "manaCost", "mana_cost"),
             type_line_en=self._text(row_dict, "type", "typeLine", "type_line"),
@@ -186,10 +197,14 @@ class MtgJsonSqliteReader:
                     language_code=language,
                     name=name,
                     type_text=self._text_from_dict(item, "typeText", "type_text"),
-                    rules_text=self._text_from_dict(item, "text", "rulesText", "rules_text"),
+                    rules_text=self._text_from_dict(
+                        item, "text", "rulesText", "rules_text"
+                    ),
                     face_name=self._text_from_dict(item, "faceName", "face_name"),
                     flavor_text=self._text_from_dict(item, "flavorText", "flavor_text"),
-                    multiverse_id=self._text_from_dict(item, "multiverseId", "multiverse_id"),
+                    multiverse_id=self._text_from_dict(
+                        item, "multiverseId", "multiverse_id"
+                    ),
                 )
             )
         return localizations
@@ -219,7 +234,9 @@ class MtgJsonSqliteReader:
     ) -> str:
         table = self._resolve_optional_table(connection, candidates)
         if table is None:
-            raise RuntimeError(f"Required table not found. Checked: {', '.join(candidates)}")
+            raise RuntimeError(
+                f"Required table not found. Checked: {', '.join(candidates)}"
+            )
         return table
 
     def _resolve_optional_table(

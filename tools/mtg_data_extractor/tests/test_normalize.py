@@ -21,3 +21,11 @@ def test_normalize_text_preserves_cyrillic() -> None:
 
 def test_normalize_text_folds_latin_diacritics() -> None:
     assert normalize_text("Æther Gust") == "aether gust"
+
+
+def test_normalize_text_preserves_hangul() -> None:
+    assert normalize_text("두창") == "두창"
+
+
+def test_normalize_text_collapses_punctuation_without_destroying_cjk() -> None:
+    assert normalize_text("神々の思し召し!!!") == "神々の思し召し"

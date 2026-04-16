@@ -15,7 +15,8 @@ class CardOverlayFrame extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 32),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.9), width: 3),
+              border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.9), width: 3),
               boxShadow: [
                 BoxShadow(
                   color: Colors.black.withValues(alpha: 0.35),

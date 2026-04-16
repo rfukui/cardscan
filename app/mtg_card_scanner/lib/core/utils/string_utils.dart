@@ -123,8 +123,7 @@ bool _isJapaneseRune(int rune) =>
     (rune >= 0xFF66 && rune <= 0xFF9F);
 
 bool _isCjkRune(int rune) =>
-    (rune >= 0x3400 && rune <= 0x4DBF) ||
-    (rune >= 0x4E00 && rune <= 0x9FFF);
+    (rune >= 0x3400 && rune <= 0x4DBF) || (rune >= 0x4E00 && rune <= 0x9FFF);
 
 bool _isHangulRune(int rune) =>
     (rune >= 0x1100 && rune <= 0x11FF) ||
@@ -132,8 +131,7 @@ bool _isHangulRune(int rune) =>
     (rune >= 0xAC00 && rune <= 0xD7AF);
 
 bool _isCyrillicRune(int rune) =>
-    (rune >= 0x0400 && rune <= 0x04FF) ||
-    (rune >= 0x0500 && rune <= 0x052F);
+    (rune >= 0x0400 && rune <= 0x04FF) || (rune >= 0x0500 && rune <= 0x052F);
 
 int levenshtein(String a, String b) {
   final n = a.length;

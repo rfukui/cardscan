@@ -4,5 +4,6 @@ import 'package:flutter/services.dart';
 import '../constants/app_constants.dart';
 
 class NativeVisionChannel {
-  static final MethodChannel channel = MethodChannel(AppConstants.nativeVisionChannel);
+  static final MethodChannel channel =
+      MethodChannel(AppConstants.nativeVisionChannel);
 }

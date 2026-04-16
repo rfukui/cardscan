@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  python-extractor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install extractor dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -e tools/mtg_data_extractor[dev]
+
+      - name: Check Python formatting
+        run: |
+          python -m black --check \
+            tools/mtg_data_extractor/mtg_data_extractor/__init__.py \
+            tools/mtg_data_extractor/sitecustomize.py \
+            tools/mtg_data_extractor/src \
+            tools/mtg_data_extractor/tests
+
+      - name: Run extractor tests
+        run: |
+          pytest tools/mtg_data_extractor/tests
+
+  flutter-app:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter dependencies
+        working-directory: app/mtg_card_scanner
+        run: flutter pub get
+
+      - name: Check Dart formatting
+        run: |
+          dart format --output=none --set-exit-if-changed \
+            app/mtg_card_scanner/lib \
+            app/mtg_card_scanner/test
+
+      - name: Analyze Flutter app
+        working-directory: app/mtg_card_scanner
+        run: flutter analyze
+
+      - name: Run Flutter tests
+        working-directory: app/mtg_card_scanner
+        run: flutter test

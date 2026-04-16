@@ -33,7 +33,8 @@ class OcrService {
           .where((line) => line.text.trim().isNotEmpty)
           .toList();
       final attempt = _buildAttempt(script, lines);
-      final previewLines = lines.take(8).map((line) => line.text.trim()).join(' | ');
+      final previewLines =
+          lines.take(8).map((line) => line.text.trim()).join(' | ');
       debugPrint(
         '[OCR][${attempt.scriptLabel}] '
         'lines=${lines.length} '
@@ -48,7 +49,8 @@ class OcrService {
     }
 
     final selectedAttempt = bestAttempt;
-    if (selectedAttempt == null || selectedAttempt.result.detectedName.isEmpty) {
+    if (selectedAttempt == null ||
+        selectedAttempt.result.detectedName.isEmpty) {
       debugPrint('[OCR] No usable text detected for image: $imagePath');
       return const OcrExtractionResult(
         detectedName: '',
@@ -103,7 +105,8 @@ class OcrService {
       }
 
       final compactLength = normalized.replaceAll(' ', '').length;
-      final wordCount = normalized.split(' ').where((part) => part.isNotEmpty).length;
+      final wordCount =
+          normalized.split(' ').where((part) => part.isNotEmpty).length;
       if (wordCount > 6 || compactLength > 40) {
         continue;
       }
@@ -118,7 +121,8 @@ class OcrService {
       if (_looksLikeMostlyNameText(text)) {
         score += 0.15;
       }
-      final verticalCenter = line.boundingBox.top + (line.boundingBox.height / 2);
+      final verticalCenter =
+          line.boundingBox.top + (line.boundingBox.height / 2);
       if (verticalCenter <= 220) {
         score += 0.08;
       } else if (verticalCenter <= 360) {
@@ -148,14 +152,16 @@ class OcrService {
     String? collectorNumber;
     for (final line in lines) {
       final text = line.text.trim();
-      if (RegExp(r'^[0-9]+/[0-9]+').hasMatch(text) || RegExp(r'^[0-9]+$').hasMatch(text)) {
+      if (RegExp(r'^[0-9]+/[0-9]+').hasMatch(text) ||
+          RegExp(r'^[0-9]+$').hasMatch(text)) {
         collectorNumber = text;
         break;
       }
     }
 
     final bestNameScore = scoredLines.isEmpty ? -1.0 : scoredLines.first.score;
-    final confidence = bestNameScore < 0 ? 0.0 : bestNameScore.clamp(0.0, 1.0).toDouble();
+    final confidence =
+        bestNameScore < 0 ? 0.0 : bestNameScore.clamp(0.0, 1.0).toDouble();
     final result = OcrExtractionResult(
       detectedName: bestName,
       candidateNames: candidateNames,

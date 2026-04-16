@@ -3,55 +3,14 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/routes.dart';
 import '../../domain/value_objects/scanner_status.dart';
 import '../providers/providers.dart';
-import '../providers/scanner_state.dart';
 
-class ProcessingScreen extends ConsumerStatefulWidget {
+class ProcessingScreen extends ConsumerWidget {
   const ProcessingScreen({super.key});
 
   @override
-  ConsumerState<ProcessingScreen> createState() => _ProcessingScreenState();
-}
-
-class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
-  bool _errorSnackVisible = false;
-
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) {
-        return;
-      }
-      final state = ref.read(scannerNotifierProvider);
-      _handleInitialState(state);
-    });
-  }
-
-  void _handleInitialState(ScannerState state) {
-    if (state.status == ScannerStatus.result && state.recognitionResult != null) {
-      _goToNextScreen(state);
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    ref.listen<ScannerState>(scannerNotifierProvider, (previous, next) {
-      if (next.status == ScannerStatus.result && next.recognitionResult != null) {
-        _goToNextScreen(next);
-      } else if (next.status == ScannerStatus.error && !_errorSnackVisible) {
-        _errorSnackVisible = true;
-        ScaffoldMessenger.of(context)
-            .showSnackBar(SnackBar(content: Text(next.message)))
-            .closed
-            .then((_) {
-          _errorSnackVisible = false;
-        });
-      }
-    });
-
+  Widget build(BuildContext context, WidgetRef ref) {
     final state = ref.watch(scannerNotifierProvider);
 
     return Scaffold(
@@ -73,29 +32,33 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
                 ),
                 const SizedBox(height: 20),
               ],
-              const CircularProgressIndicator(),
+              if (state.status == ScannerStatus.error)
+                const Icon(Icons.error_outline,
+                    size: 42, color: Colors.orangeAccent)
+              else
+                const CircularProgressIndicator(),
               const SizedBox(height: 20),
               Text(
-                'Identifying card locally',
+                state.status == ScannerStatus.error
+                    ? 'Card identification failed'
+                    : 'Identifying card locally',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
               Text(
                 state.message,
                 textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white70),
+                style: Theme.of(context)
+                    .textTheme
+                    .bodyMedium
+                    ?.copyWith(color: Colors.white70),
               ),
               if (state.status == ScannerStatus.error) ...[
                 const SizedBox(height: 20),
                 FilledButton(
-                  onPressed: () {
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    _errorSnackVisible = false;
-                    ref.invalidate(scannerNotifierProvider);
-                    Navigator.of(context).popUntil(
-                      (route) => route.settings.name == AppRoutes.camera || route.isFirst,
-                    );
-                  },
+                  onPressed: ref
+                      .read(scannerNotifierProvider.notifier)
+                      .restartScanFlow,
                   child: const Text('Try again'),
                 ),
               ],
@@ -104,12 +67,5 @@ class _ProcessingScreenState extends ConsumerState<ProcessingScreen> {
         ),
       ),
     );
-  }
-
-  void _goToNextScreen(ScannerState state) {
-    final route = state.recognitionResult!.requiresManualSelection
-        ? AppRoutes.candidateSelection
-        : AppRoutes.result;
-    Navigator.of(context).pushReplacementNamed(route);
   }
 }

@@ -14,7 +14,9 @@ class CardMatcherService {
     final candidates = <CardCandidate>[];
 
     for (final card in cards) {
-      final cardName = card.normalizedName.isEmpty ? normalizeText(card.name) : card.normalizedName;
+      final cardName = card.normalizedName.isEmpty
+          ? normalizeText(card.name)
+          : card.normalizedName;
       final nameScore = _scoreName(query, cardName);
       if (nameScore <= 0.0) {
         continue;
@@ -25,10 +27,10 @@ class CardMatcherService {
         collectorScore = 1.0;
       }
       final setScore = 0.0;
-      final languageBonus = _languageBonus(extraction.detectedScript, query, card.lang);
+      final languageBonus =
+          _languageBonus(extraction.detectedScript, query, card.lang);
       final rarityBonus = _rarityBonus(card.rarity);
-      final finalScore =
-          (nameScore * 0.80) +
+      final finalScore = (nameScore * 0.80) +
           (collectorScore * 0.15) +
           (setScore * 0.05) +
           languageBonus +
@@ -59,7 +61,8 @@ class CardMatcherService {
     return 0.0;
   }
 
-  double _languageBonus(String? detectedScript, String query, String? cardLanguage) {
+  double _languageBonus(
+      String? detectedScript, String query, String? cardLanguage) {
     if (cardLanguage == null || cardLanguage.isEmpty) {
       return 0.0;
     }

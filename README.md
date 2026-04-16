@@ -1,182 +1,120 @@
 # MTG Card Scanner Monorepo
 
-This repository contains two clearly separated parts within the same project:
+This repository contains an offline Magic: The Gathering scanner and the internal data pipeline that prepares its local card database.
 
-- `app/mtg_card_scanner`: an offline Flutter app for scanning Magic: The Gathering cards.
-- `tools/mtg_data_extractor`: a Python tool that generates the SQLite database consumed by the app.
+The project is intentionally split into two parts:
 
-## Structure
+- `app/mtg_card_scanner`
+  Flutter mobile app for scanning cards, matching them locally, and storing scan history.
+- `tools/mtg_data_extractor`
+  Python tool that reads MTGJSON data and generates the SQLite database used by the app.
 
-```text
-repo-root/
-  app/mtg_card_scanner/
-  tools/mtg_data_extractor/
-  data/raw/
-  data/generated/
-  docs/
-```
+Additional repository folders:
 
-## Data Flow
+- `data/raw`
+  Local MTGJSON source files.
+- `data/generated`
+  Locally generated scanner database output.
+- `docs`
+  Project documentation, including the data pipeline description.
 
-1. Download the raw MTGJSON SQLite archive into `data/raw/`.
-   Recommended source:
-   `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
-   Expected path:
-   `data/raw/AllPrintings.sqlite.xz`
-2. Generate the final scanner database:
+## What the Repository Does
 
-```bash
-cd tools/mtg_data_extractor
-python -m mtg_data_extractor.cli build
-```
+The app works fully on-device:
 
-3. Sync the generated database into the Flutter app assets:
+- opens the camera
+- captures a card image
+- runs OCR locally
+- looks up candidates in a local SQLite catalog
+- shows the best result or a manual candidate selection screen
+- stores scan history locally
 
-```bash
-cd tools/mtg_data_extractor
-python -m mtg_data_extractor.cli sync
-```
+The app does not depend on Python at runtime. Python is only used to build the SQLite catalog during development and data refresh workflows.
 
-## Important Paths
+## Quick Start
 
-- Raw source database: `data/raw/AllPrintings.sqlite` or `data/raw/AllPrintings.sqlite.xz`
-- Generated scanner database: `data/generated/mtg_cards.sqlite`
-- Flutter app asset database: `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
+### 1. Download the MTGJSON source archive
 
-## Downloading MTGJSON
-
-The raw MTGJSON SQLite archive is not committed to this repository.
-
-Download it manually:
+The repository does not commit the raw MTGJSON SQLite file.
 
 ```bash
 curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o data/raw/AllPrintings.sqlite.xz
 ```
 
-## Documentation
+### 2. Build and sync the local SQLite database
 
-- Data pipeline: [docs/data-pipeline.md](docs/data-pipeline.md)
-- Python extractor: [tools/mtg_data_extractor/README.md](tools/mtg_data_extractor/README.md)
-- Contribution guidelines: [CONTRIBUTING.md](CONTRIBUTING.md)
+```bash
+cd tools/mtg_data_extractor
+python3 -m mtg_data_extractor.cli build
+python3 -m mtg_data_extractor.cli sync
+```
+
+This produces:
+
+- `data/generated/mtg_cards.sqlite`
+- `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
+
+Both files are generated locally and are not committed.
+
+### 3. Run the Flutter app
+
+```bash
+cd ../../app/mtg_card_scanner
+flutter pub get
+flutter run
+```
+
+If the SQLite asset is missing, the app now reports a clear initialization error telling you to run the extractor build and sync steps.
+
+## Important Paths
+
+- Raw MTGJSON archive:
+  `data/raw/AllPrintings.sqlite.xz`
+- Generated scanner database:
+  `data/generated/mtg_cards.sqlite`
+- Flutter asset database:
+  `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
+
+## What Is Generated vs. What Is Committed
+
+Committed:
+
+- Flutter app source
+- extractor source
+- repository docs
+- placeholder directories such as `.gitkeep`
+
+Generated locally and ignored:
+
+- `data/raw/AllPrintings.sqlite.xz`
+- `data/generated/mtg_cards.sqlite`
+- `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
+
+That means a new clone is expected to run the data pipeline before the scanner can identify cards.
+
+## How Collaborators Should Work
+
+1. Generate or refresh the database when card data changes.
+2. Sync the generated SQLite file into the Flutter app assets.
+3. Run the app locally and validate the scanner flow.
+4. Keep app work and extractor work separated by directory and responsibility.
+5. Follow [CONTRIBUTING.md](CONTRIBUTING.md), including Conventional Commits.
+
+## Additional Documentation
+
+- App-specific usage:
+  [app/mtg_card_scanner/README.md](app/mtg_card_scanner/README.md)
+- Extractor usage:
+  [tools/mtg_data_extractor/README.md](tools/mtg_data_extractor/README.md)
+- Data pipeline details:
+  [docs/data-pipeline.md](docs/data-pipeline.md)
 
 ## Repository Tooling
 
-Root-level repository tooling is managed with npm.
-
-Install it once to enable `commitlint` and the Git hook setup:
+Root-level Git tooling uses `npm` for `commitlint` and hook setup:
 
 ```bash
 npm install
-```
-
-## Android Setup
-
-To run the Flutter app locally on Android, you need the Android SDK.
-
-### Option 1: Android Studio
-
-This is the recommended setup for most contributors.
-
-1. Download Android Studio from the official Android Developers page:
-   `https://developer.android.com/studio`
-2. Install Android Studio.
-3. Open Android Studio and install:
-   `Android SDK`
-   `Android SDK Platform-Tools`
-   `Android SDK Command-line Tools (latest)`
-4. Run:
-
-```bash
-flutter doctor
-flutter doctor --android-licenses
-```
-
-### Option 2: No Android Studio
-
-If you do not want to install Android Studio, you can use the Android command-line tools only.
-
-1. Download the official Android command-line tools:
-   `https://developer.android.com/tools`
-2. Create an SDK directory, for example:
-
-```bash
-mkdir -p ~/Android/Sdk
-```
-
-3. Extract the downloaded archive so that `sdkmanager` ends up at:
-   `$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager`
-4. Add these environment variables to your shell profile:
-
-```bash
-export ANDROID_SDK_ROOT=$HOME/Android/Sdk
-export ANDROID_HOME=$HOME/Android/Sdk
-export PATH=$PATH:$ANDROID_SDK_ROOT/cmdline-tools/latest/bin
-export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
-```
-
-5. Install the minimum Android SDK components:
-
-```bash
-sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "cmdline-tools;latest"
-flutter doctor --android-licenses
-flutter doctor
-```
-
-### Running the App
-
-Once Flutter and the Android toolchain are ready:
-
-```bash
-cd app/mtg_card_scanner
-flutter pub get
-flutter devices
-flutter run
-```
-
-### Running on a Physical Android Device
-
-1. Enable Developer Options on your Android phone.
-2. Enable `USB debugging`.
-3. Connect the device over USB.
-4. Verify that Flutter can see it:
-
-```bash
-flutter devices
-```
-
-5. Run the app:
-
-```bash
-cd app/mtg_card_scanner
-flutter run
-```
-
-If the device does not appear, verify that `adb` is available and that the phone accepted the debugging authorization prompt.
-
-### Running on an Android Emulator
-
-If you installed Android Studio, the easiest way is to create and manage an emulator from the Android Studio Device Manager.
-
-If you are using command-line tools only, you also need:
-
-- `emulator`
-- at least one Android system image
-- `avdmanager`
-
-Example setup:
-
-```bash
-sdkmanager --install "emulator" "system-images;android-34;google_apis;x86_64"
-avdmanager create avd -n pixel-test -k "system-images;android-34;google_apis;x86_64"
-emulator -avd pixel-test
-```
-
-Then, in another terminal:
-
-```bash
-cd app/mtg_card_scanner
-flutter devices
-flutter run
 ```
 
 ## License

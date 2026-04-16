@@ -1,11 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import '../../../../core/constants/app_constants.dart';
+import '../../../../core/errors/app_exception.dart';
 import '../../domain/entities/magic_card.dart';
 import '../models/magic_card_model.dart';
 
@@ -150,7 +152,8 @@ class LocalCardDatabase {
 
   Future<void> saveScanHistory(Map<String, dynamic> row) async {
     final db = await database;
-    await db.insert(_scanHistoryTable, row, conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(_scanHistoryTable, row,
+        conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<List<Map<String, dynamic>>> listScanHistory() async {
@@ -173,17 +176,18 @@ class LocalCardDatabase {
     );
     final databaseFile = File(databasePath);
     final versionFile = File(
-      p.join(directory.path, AppConstants.writableCatalogDatabaseVersionFileName),
+      p.join(
+          directory.path, AppConstants.writableCatalogDatabaseVersionFileName),
     );
     final currentVersion = await _readWritableDatabaseVersion(versionFile);
-    final shouldRefreshDatabase =
-        !await databaseFile.exists() || currentVersion != AppConstants.bundledCatalogDatabaseVersion;
+    final shouldRefreshDatabase = !await databaseFile.exists() ||
+        currentVersion != AppConstants.bundledCatalogDatabaseVersion;
 
     if (!shouldRefreshDatabase) {
       return databasePath;
     }
 
-    final asset = await rootBundle.load(AppConstants.bundledCatalogAssetPath);
+    final asset = await _loadBundledDatabaseAsset();
     await databaseFile.writeAsBytes(
       asset.buffer.asUint8List(asset.offsetInBytes, asset.lengthInBytes),
       flush: true,
@@ -201,5 +205,18 @@ class LocalCardDatabase {
     }
     final value = await versionFile.readAsString();
     return int.tryParse(value.trim());
+  }
+
+  Future<ByteData> _loadBundledDatabaseAsset() async {
+    try {
+      return await rootBundle.load(AppConstants.bundledCatalogAssetPath);
+    } on FlutterError catch (error) {
+      debugPrint(
+        '[Bootstrap] Missing database asset: ${AppConstants.bundledCatalogAssetPath}. '
+        'Run the extractor build and sync steps before starting the app.',
+      );
+      debugPrint('[Bootstrap] Asset load error: $error');
+      throw MissingCatalogAssetException();
+    }
   }
 }

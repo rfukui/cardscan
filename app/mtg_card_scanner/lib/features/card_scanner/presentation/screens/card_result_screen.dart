@@ -3,7 +3,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../../../app/routes.dart';
 import '../../../../app/route_args.dart';
 import '../../domain/entities/magic_card.dart';
 import '../providers/providers.dart';
@@ -23,17 +22,17 @@ class CardResultScreen extends ConsumerWidget {
           imagePath: args?.imagePath,
           selectedManually: args?.selectedManually ?? false,
         ),
-        loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-        error: (_, __) => const Scaffold(body: Center(child: Text('Unable to load card result'))),
+        loading: () =>
+            const Scaffold(body: Center(child: CircularProgressIndicator())),
+        error: (_, __) => const Scaffold(
+            body: Center(child: Text('Unable to load card result'))),
       );
     }
 
     final state = ref.watch(scannerNotifierProvider);
-    final result = state.recognitionResult;
-    final card = result?.bestMatch ?? (result?.candidates.isNotEmpty == true ? result!.candidates.first.card : null);
 
     return _ResultScaffold(
-      card: card,
+      card: state.resolvedCard,
       imagePath: state.capturedImagePath,
       selectedManually: state.selectedManually,
     );
@@ -53,7 +52,9 @@ class _ResultScaffold extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final liveCandidates = ref.watch(scannerNotifierProvider).recognitionResult?.candidates ?? const [];
+    final liveCandidates =
+        ref.watch(scannerNotifierProvider).recognitionResult?.candidates ??
+            const [];
 
     return Scaffold(
       appBar: AppBar(title: const Text('Card Result')),
@@ -68,8 +69,9 @@ class _ResultScaffold extends ConsumerWidget {
                     const SizedBox(height: 16),
                     FilledButton(
                       onPressed: () {
-                        ref.read(scannerNotifierProvider.notifier).reset();
-                        Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.camera, (route) => false);
+                        ref
+                            .read(scannerNotifierProvider.notifier)
+                            .restartScanFlow();
                       },
                       child: const Text('Back to camera'),
                     ),
@@ -98,20 +100,27 @@ class _ResultScaffold extends ConsumerWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(card!.name, style: Theme.of(context).textTheme.headlineSmall),
+                          Text(card!.name,
+                              style: Theme.of(context).textTheme.headlineSmall),
                           const SizedBox(height: 8),
                           if (selectedManually)
                             Text(
                               'Selected manually',
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.amberAccent),
+                              style: Theme.of(context)
+                                  .textTheme
+                                  .bodySmall
+                                  ?.copyWith(color: Colors.amberAccent),
                             ),
                           const SizedBox(height: 12),
                           _FieldRow(label: 'Set code', value: card!.setCode),
                           _FieldRow(label: 'Set name', value: card!.setName),
-                          _FieldRow(label: 'Collector number', value: card!.collectorNumber),
+                          _FieldRow(
+                              label: 'Collector number',
+                              value: card!.collectorNumber),
                           _FieldRow(label: 'Mana cost', value: card!.manaCost),
                           _FieldRow(label: 'Type line', value: card!.typeLine),
-                          _FieldRow(label: 'Oracle text', value: card!.oracleText),
+                          _FieldRow(
+                              label: 'Oracle text', value: card!.oracleText),
                           _FieldRow(label: 'Rarity', value: card!.rarity),
                         ],
                       ),
@@ -120,17 +129,18 @@ class _ResultScaffold extends ConsumerWidget {
                   const SizedBox(height: 16),
                   FilledButton(
                     onPressed: () {
-                      ref.read(scannerNotifierProvider.notifier).reset();
-                      Navigator.of(context).pushNamedAndRemoveUntil(AppRoutes.camera, (route) => false);
+                      ref
+                          .read(scannerNotifierProvider.notifier)
+                          .restartScanFlow();
                     },
                     child: const Text('Scan another card'),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: liveCandidates.length > 1
-                        ? () {
-                            Navigator.of(context).pushNamed(AppRoutes.candidateSelection);
-                          }
+                        ? ref
+                            .read(scannerNotifierProvider.notifier)
+                            .reopenCandidateSelection
                         : null,
                     child: const Text('Not this card'),
                   ),
@@ -157,9 +167,14 @@ class _FieldRow extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white70)),
+          Text(label,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelMedium
+                  ?.copyWith(color: Colors.white70)),
           const SizedBox(height: 2),
-          Text(value?.isNotEmpty == true ? value! : '-', style: Theme.of(context).textTheme.bodyLarge),
+          Text(value?.isNotEmpty == true ? value! : '-',
+              style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );
