@@ -13,7 +13,13 @@ Primary input:
 - `data/raw/AllPrintings.sqlite`
 - `data/raw/AllPrintings.sqlite.xz`
 
-The repository currently assumes the compressed file is available at:
+The compressed archive is not stored in the repository.
+
+Download it from:
+
+- `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
+
+Then place it at:
 
 - `data/raw/AllPrintings.sqlite.xz`
 
@@ -48,6 +54,12 @@ Main tables:
 The app uses `cards` as its primary source and can query `card_localizations` and `card_aliases` for multilingual matching.
 
 ## Commands
+
+Download the source archive:
+
+```bash
+curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o data/raw/AllPrintings.sqlite.xz
+```
 
 Build:
 

@@ -13,7 +13,13 @@ It is not part of the mobile UI and is not used by the app at runtime.
 - `data/raw/AllPrintings.sqlite`
 - `data/raw/AllPrintings.sqlite.xz`
 
-The current repository layout already includes:
+The compressed archive is not committed to the repository.
+
+Download it from:
+
+- `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
+
+Then place it at:
 
 - `data/raw/AllPrintings.sqlite.xz`
 
@@ -26,6 +32,12 @@ Optionally, the generated database is synced to:
 - `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
 
 ## Commands
+
+Download the source archive:
+
+```bash
+curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o ../../data/raw/AllPrintings.sqlite.xz
+```
 
 Build using default paths:
 

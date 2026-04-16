@@ -18,8 +18,11 @@ repo-root/
 
 ## Data Flow
 
-1. Place the raw MTGJSON file in `data/raw/`.
-   The repository currently expects: `data/raw/AllPrintings.sqlite.xz`.
+1. Download the raw MTGJSON SQLite archive into `data/raw/`.
+   Recommended source:
+   `https://mtgjson.com/api/v5/AllPrintings.sqlite.xz`
+   Expected path:
+   `data/raw/AllPrintings.sqlite.xz`
 2. Generate the final scanner database:
 
 ```bash
@@ -39,6 +42,16 @@ python -m mtg_data_extractor.cli sync
 - Raw source database: `data/raw/AllPrintings.sqlite` or `data/raw/AllPrintings.sqlite.xz`
 - Generated scanner database: `data/generated/mtg_cards.sqlite`
 - Flutter app asset database: `app/mtg_card_scanner/assets/database/mtg_cards.sqlite`
+
+## Downloading MTGJSON
+
+The raw MTGJSON SQLite archive is not committed to this repository.
+
+Download it manually:
+
+```bash
+curl -L https://mtgjson.com/api/v5/AllPrintings.sqlite.xz -o data/raw/AllPrintings.sqlite.xz
+```
 
 ## Documentation
 
